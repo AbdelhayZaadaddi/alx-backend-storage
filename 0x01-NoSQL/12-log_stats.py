@@ -1,39 +1,31 @@
 #!/usr/bin/env python3
-"""Stats about Nginx logs stored in MongoDB:
+""" File 12-log_stats.py """
 
-Database: logs
-Collection: nginx
-Display (same as the example):
-first line: x logs where x is the number of documents in this collection
-second line: Methods:
-5 lines with the number of documents with the method =
-["GET", "POST", "PUT", "PATCH", "DELETE"] in this order
-(see example below - warning: it’s a tabulation before each line)
-one line with the number of documents with:
-method=GET
-path=/status
-You can use this dump as data sample: dump.zip
-"""
-
-
-import pymongo
 from pymongo import MongoClient
 
 
-def log_nginx_stats(mongo_collection):
-    """provides some stats about Nginx logs"""
-    print(f"{mongo_collection.estimated_document_count()} logs")
+def log_stats(nginx_collection):
+    """
+        Python script that provides some
+        stats about Nginx logs stored in MongoDB
+    """
 
+    print("{} logs".format(nginx_collection.count_documents({})))
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
     print("Methods:")
-    for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
-        count = mongo_collection.count_documents({"method": method})
-        print(f"\tmethod {method}: {count}")
+    for method in methods:
+        count_method = nginx_collection.count_documents({"method": method})
+        print("\tmethod {}: {}".format(method, count_method))
+    path_status = nginx_collection.count_documents({"path": "/status"})
+    print("{} status check".format(path_status))
 
-    number_of_gets = mongo_collection.count_documents(
-        {"method": "GET", "path": "/status"})
-    print(f"{number_of_gets} status check")
+
+def connected_to_mongo():
+    """ Connects to MongoDB """
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    nginx_collection = client.logs.nginx
+    log_stats(nginx_collection)
 
 
 if __name__ == "__main__":
-    mongo_collection = MongoClient('mongodb://127.0.0.1:27017').logs.nginx
-    log_nginx_stats(mongo_collection)
+    connected_to_mongo()
